@@ -40,15 +40,6 @@ const Home = () => {
     return [headers.join(','), ...rows].join('\n');
   };
 
-  const downloadCSV = (csvStr) => {
-    const blob = new Blob([csvStr], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'food_inventory.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
 
   const sendCSVEmail = async (csvStr) => {
     const toastId = toast.loading('Sending email...');
@@ -85,7 +76,6 @@ const Home = () => {
     }
 
     const csvString = generateCSV(quantities);
-    downloadCSV(csvString);
     sendCSVEmail(csvString);
   };
 
