@@ -1,0 +1,132 @@
+/* Full page layout */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  background: #f5fff7;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Logo */
+.logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+/* Title */
+.home-title {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #222;
+  text-align: center;
+}
+
+/* Category dropdown */
+.category-select {
+  width: 80%;
+  max-width: 400px;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+/* Wrapper that scrolls (only item list) */
+.item-list-wrapper {
+  flex-grow: 1;
+  width: 100%;
+  max-width: 600px;
+  overflow-y: auto;
+  margin-top: 10px;
+  padding-right: 10px;
+}
+
+/* Inner list layout */
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 50px;
+}
+
+/* Row layout */
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Label */
+.item-row label {
+  flex: 1;
+  font-size: 1rem;
+}
+
+/* Quantity input */
+.item-row input {
+  width: 100px;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Submit button at bottom fixed */
+.submit-button {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2e7d32;
+  color: white;
+  font-size: 1rem;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+  cursor: pointer;
+  z-index: 10;
+  width: calc(100% - 40px);
+  max-width: 400px;
+}
+
+/* Hover effect */
+.submit-button:hover {
+  background-color: #1b5e20;
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+  .home-title {
+    font-size: 1.5rem;
+  }
+
+  .category-select {
+    width: 95%;
+  }
+
+
+  .item-row input {
+    width: 70px;
+  }
+
+  .submit-button {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+}
