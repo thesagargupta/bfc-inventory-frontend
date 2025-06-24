@@ -4,6 +4,8 @@ import { categoryMap, allCategories } from './data';
 import logo from '../assets/logo.png';
 import toast, { Toaster } from 'react-hot-toast';
 
+const BACKEND_URL = 'https://bfc-inventory-backend.onrender.com/send-email';
+
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [quantities, setQuantities] = useState({});
@@ -52,7 +54,7 @@ const Home = () => {
     const toastId = toast.loading('Sending email...');
     setLoading(true);
     try {
-      const response = await fetch('/send-email', {
+      const response = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
