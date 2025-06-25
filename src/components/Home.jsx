@@ -5,17 +5,16 @@ import logo from "../assets/logo.png";
 import toast, { Toaster } from "react-hot-toast";
 import { IoLogOutOutline } from "react-icons/io5";
 
-// Use import.meta.env in Vite
 const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL;
 const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD;
 
-const BACKEND_URL = "https://bfc-inventory-backend.onrender.com/send-email";
+const BACKEND_URL = "http://localhost:5000";
 
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
   Chandigarh: { hour: 0, minute: 0 },
-  Delhi: { hour: 0, minute: 0 },
+  Delhi: { hour: 6, minute: 0 },
   Gurugram: { hour: 0, minute: 0 },
 };
 
@@ -41,30 +40,32 @@ const Home = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const fetchLastSubmission = async () => {
       if (selectedBranch) {
-        const now = new Date();
-        const { hour, minute } = scheduledTimes[selectedBranch];
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
+        try {
+          const res = await fetch(`${BACKEND_URL}/last-submission/${selectedBranch}`);
+          const data = await res.json();
+          const today = getTodayDateString();
+          const lastSubmissionDate = data?.date;
 
-        const isAfterTime =
-          currentHour > hour ||
-          (currentHour === hour && currentMinute >= minute);
+          const now = new Date();
+          const { hour, minute } = scheduledTimes[selectedBranch];
+          const isAfterTime =
+            now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= minute);
 
-        const lastSentDate = localStorage.getItem(
-          `submitted-${selectedBranch}`
-        );
-        const today = getTodayDateString();
-        const isSubmittedToday = lastSentDate === today;
-
-        setAlreadySubmitted(isSubmittedToday);
-        setCanSubmit(isAfterTime && !isSubmittedToday);
+          setAlreadySubmitted(lastSubmissionDate === today);
+          setCanSubmit(isAfterTime && lastSubmissionDate !== today);
+        } catch (err) {
+          console.error("Failed to fetch last submission:", err);
+        }
       } else {
-        setCanSubmit(false);
         setAlreadySubmitted(false);
+        setCanSubmit(false);
       }
-    }, 1000);
+    };
+
+    fetchLastSubmission();
+    const interval = setInterval(fetchLastSubmission, 10000);
     return () => clearInterval(interval);
   }, [selectedBranch]);
 
@@ -114,22 +115,18 @@ const Home = () => {
     const headers = ["Category", "Item", "Quantity (Kg)"];
     const rows = Object.entries(dataMap)
       .filter(([, val]) => val.quantity)
-      .map(
-        ([item, { quantity, category }]) => `${category},${item},${quantity}`
-      );
-    return [`Branch: ${branchName || "N/A"}`, headers.join(","), ...rows].join(
-      "\n"
-    );
+      .map(([item, { quantity, category }]) => `${category},${item},${quantity}`);
+    return [`Branch: ${branchName || "N/A"}`, headers.join(","), ...rows].join("\n");
   };
 
   const sendCSVEmail = async (csvStr, successCallback) => {
     const toastId = toast.loading("Sending email...");
     setLoading(true);
     try {
-      const response = await fetch(BACKEND_URL, {
+      const response = await fetch(`${BACKEND_URL}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: csvStr }),
+        body: JSON.stringify({ csv: csvStr, branch: selectedBranch }),
       });
       const result = await response.json();
       setLoading(false);
@@ -148,15 +145,12 @@ const Home = () => {
   };
 
   const handleSubmit = () => {
-    const hasData = Object.values(quantities).some(
-      (val) => val && val.quantity
-    );
+    const hasData = Object.values(quantities).some((val) => val && val.quantity);
     if (!selectedBranch) return toast.error("Please select a branch.");
     if (!hasData) return toast.error("No data to save.");
 
     const csvString = generateCSV(quantities);
     sendCSVEmail(csvString, () => {
-      localStorage.setItem(`submitted-${selectedBranch}`, getTodayDateString());
       setQuantities({});
       setSelectedCategory("");
     });
@@ -175,19 +169,13 @@ const Home = () => {
             value={loginEmail}
             onChange={(e) => setLoginEmail(e.target.value)}
           />
-          <div
-            className="password-field"
-            style={{ position: "relative", width: "100%" }}
-          >
+          <div className="password-field" style={{ position: "relative", width: "100%" }}>
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
-              style={{
-                width: "100%",
-                paddingRight: "40px", // space for the eye icon
-              }}
+              style={{ width: "100%", paddingRight: "40px" }}
             />
             <button
               type="button"
@@ -208,10 +196,7 @@ const Home = () => {
               {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
-
-          <button onClick={handleLogin} className="submit-button">
-            Login
-          </button>
+          <button onClick={handleLogin} className="submit-button">Login</button>
         </div>
       </div>
     );
@@ -220,16 +205,7 @@ const Home = () => {
   return (
     <div className="home-container">
       <Toaster position="top-center" />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          maxWidth: 400,
-          margin: "0 auto 10px",
-          position: "relative",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 400, margin: "0 auto 10px", position: "relative" }}>
         <img src={logo} alt="Logo" className="logo" />
         <IoLogOutOutline
           onClick={handleLogout}
@@ -250,50 +226,35 @@ const Home = () => {
       </div>
       <h1 className="home-title">Food Inventory Entry</h1>
 
-      <select
-        className="category-select"
-        value={selectedBranch}
-        onChange={handleBranchChange}
-      >
+      <select className="category-select" value={selectedBranch} onChange={handleBranchChange}>
         <option value="">Select Branch</option>
         {branchOptions.map((branch) => (
-          <option key={branch} value={branch}>
-            {branch}
-          </option>
+          <option key={branch} value={branch}>{branch}</option>
         ))}
       </select>
 
-      <select
-        className="category-select"
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-      >
+      <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
         <option value="">Select Category</option>
         {allCategories.map((cat) => (
-          <option key={cat} value={cat}>
-            {cat}
-          </option>
+          <option key={cat} value={cat}>{cat}</option>
         ))}
       </select>
 
       <div className="item-list-wrapper">
         <div className="item-list">
-          {selectedCategory &&
-            categoryMap[selectedCategory].map((item) => (
-              <div className="item-row" key={item}>
-                <label>{item}</label>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={quantities[item]?.quantity || ""}
-                  onChange={(e) =>
-                    handleQtyChange(selectedCategory, item, e.target.value)
-                  }
-                  placeholder="Qty (Kg)"
-                />
-              </div>
-            ))}
+          {selectedCategory && categoryMap[selectedCategory].map((item) => (
+            <div className="item-row" key={item}>
+              <label>{item}</label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={quantities[item]?.quantity || ""}
+                onChange={(e) => handleQtyChange(selectedCategory, item, e.target.value)}
+                placeholder="Qty (Kg)"
+              />
+            </div>
+          ))}
         </div>
       </div>
 
