@@ -8,8 +8,7 @@ import { IoLogOutOutline } from "react-icons/io5";
 const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL;
 const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD;
 
-const BACKEND_URL = "https://bfc-inventory-backend.onrender.com/send-email";
-
+const BACKEND_URL = "http://localhost:5000";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
@@ -40,32 +39,43 @@ const Home = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const fetchLastSubmission = async () => {
-      if (selectedBranch) {
-        try {
-          const res = await fetch(`${BACKEND_URL}/last-submission/${selectedBranch}`);
-          const data = await res.json();
-          const today = getTodayDateString();
-          const lastSubmissionDate = data?.date;
-
-          const now = new Date();
-          const { hour, minute } = scheduledTimes[selectedBranch];
-          const isAfterTime =
-            now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= minute);
-
-          setAlreadySubmitted(lastSubmissionDate === today);
-          setCanSubmit(isAfterTime && lastSubmissionDate !== today);
-        } catch (err) {
-          console.error("Failed to fetch last submission:", err);
-        }
-      } else {
-        setAlreadySubmitted(false);
+    const checkEligibility = async () => {
+      if (!selectedBranch) {
         setCanSubmit(false);
+        setAlreadySubmitted(false);
+        return;
+      }
+
+      const now = new Date();
+      const { hour, minute } = scheduledTimes[selectedBranch];
+      const isAfterTime =
+        now.getHours() > hour ||
+        (now.getHours() === hour && now.getMinutes() >= minute);
+
+      try {
+        const response = await fetch(
+          `${BACKEND_URL}/last-submission/${selectedBranch}`
+        );
+        const result = await response.json();
+        const today = getTodayDateString();
+        const lastDate = result?.date;
+
+        if (lastDate === today) {
+          setAlreadySubmitted(true);
+          setCanSubmit(false);
+        } else {
+          setAlreadySubmitted(false);
+          setCanSubmit(isAfterTime);
+        }
+      } catch (err) {
+        console.error("Error checking submission status:", err);
+        setAlreadySubmitted(false);
+        setCanSubmit(isAfterTime);
       }
     };
 
-    fetchLastSubmission();
-    const interval = setInterval(fetchLastSubmission, 10000);
+    checkEligibility();
+    const interval = setInterval(checkEligibility, 60000); // Check every 1 min
     return () => clearInterval(interval);
   }, [selectedBranch]);
 
@@ -115,8 +125,12 @@ const Home = () => {
     const headers = ["Category", "Item", "Quantity (Kg)"];
     const rows = Object.entries(dataMap)
       .filter(([, val]) => val.quantity)
-      .map(([item, { quantity, category }]) => `${category},${item},${quantity}`);
-    return [`Branch: ${branchName || "N/A"}`, headers.join(","), ...rows].join("\n");
+      .map(
+        ([item, { quantity, category }]) => `${category},${item},${quantity}`
+      );
+    return [`Branch: ${branchName || "N/A"}`, headers.join(","), ...rows].join(
+      "\n"
+    );
   };
 
   const sendCSVEmail = async (csvStr, successCallback) => {
@@ -126,7 +140,10 @@ const Home = () => {
       const response = await fetch(`${BACKEND_URL}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: csvStr, branch: selectedBranch }),
+        body: JSON.stringify({
+          csv: csvStr,
+          branch: selectedBranch,
+        }),
       });
       const result = await response.json();
       setLoading(false);
@@ -145,7 +162,9 @@ const Home = () => {
   };
 
   const handleSubmit = () => {
-    const hasData = Object.values(quantities).some((val) => val && val.quantity);
+    const hasData = Object.values(quantities).some(
+      (val) => val && val.quantity
+    );
     if (!selectedBranch) return toast.error("Please select a branch.");
     if (!hasData) return toast.error("No data to save.");
 
@@ -153,6 +172,8 @@ const Home = () => {
     sendCSVEmail(csvString, () => {
       setQuantities({});
       setSelectedCategory("");
+      setAlreadySubmitted(true);
+      setCanSubmit(false);
     });
   };
 
@@ -169,7 +190,7 @@ const Home = () => {
             value={loginEmail}
             onChange={(e) => setLoginEmail(e.target.value)}
           />
-          <div className="password-field" style={{ position: "relative", width: "100%" }}>
+          <div className="password-field" style={{ position: "relative" }}>
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
@@ -196,7 +217,9 @@ const Home = () => {
               {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
-          <button onClick={handleLogin} className="submit-button">Login</button>
+          <button onClick={handleLogin} className="submit-button">
+            Login
+          </button>
         </div>
       </div>
     );
@@ -205,7 +228,16 @@ const Home = () => {
   return (
     <div className="home-container">
       <Toaster position="top-center" />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 400, margin: "0 auto 10px", position: "relative" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          maxWidth: 400,
+          margin: "0 auto 10px",
+          position: "relative",
+        }}
+      >
         <img src={logo} alt="Logo" className="logo" />
         <IoLogOutOutline
           onClick={handleLogout}
@@ -226,35 +258,50 @@ const Home = () => {
       </div>
       <h1 className="home-title">Food Inventory Entry</h1>
 
-      <select className="category-select" value={selectedBranch} onChange={handleBranchChange}>
+      <select
+        className="category-select"
+        value={selectedBranch}
+        onChange={handleBranchChange}
+      >
         <option value="">Select Branch</option>
         {branchOptions.map((branch) => (
-          <option key={branch} value={branch}>{branch}</option>
+          <option key={branch} value={branch}>
+            {branch}
+          </option>
         ))}
       </select>
 
-      <select className="category-select" value={selectedCategory} onChange={handleCategoryChange}>
+      <select
+        className="category-select"
+        value={selectedCategory}
+        onChange={handleCategoryChange}
+      >
         <option value="">Select Category</option>
         {allCategories.map((cat) => (
-          <option key={cat} value={cat}>{cat}</option>
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
         ))}
       </select>
 
       <div className="item-list-wrapper">
         <div className="item-list">
-          {selectedCategory && categoryMap[selectedCategory].map((item) => (
-            <div className="item-row" key={item}>
-              <label>{item}</label>
-              <input
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={quantities[item]?.quantity || ""}
-                onChange={(e) => handleQtyChange(selectedCategory, item, e.target.value)}
-                placeholder="Qty (Kg)"
-              />
-            </div>
-          ))}
+          {selectedCategory &&
+            categoryMap[selectedCategory].map((item) => (
+              <div className="item-row" key={item}>
+                <label>{item}</label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={quantities[item]?.quantity || ""}
+                  onChange={(e) =>
+                    handleQtyChange(selectedCategory, item, e.target.value)
+                  }
+                  placeholder="Qty (Kg)"
+                />
+              </div>
+            ))}
         </div>
       </div>
 
