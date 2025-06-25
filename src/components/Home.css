@@ -130,3 +130,104 @@
     padding: 10px;
   }
 }
+.login-container {
+  display: flex;
+  justify-content: center;  /* center horizontally */
+  align-items: center;      /* center vertically */
+  min-height: 100vh;
+  background: #f0fff4;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.login-box {
+  background: white;
+  padding: 30px 25px;       /* a bit more padding for breathing space */
+  border-radius: 16px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 200px;
+  box-sizing: border-box;
+}
+
+/* Password field layout */
+.password-field {
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  outline-offset: 2px;
+  transition: border-color 0.2s ease;
+}
+
+.password-field input:focus {
+  border-color: #4caf50;
+  outline: none;
+  box-shadow: 0 0 5px #4caf50aa;
+}
+
+/* Eye toggle button */
+.eye-toggle {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #555;
+  padding: 0;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.eye-toggle:hover {
+  color: #4caf50;
+}
+
+/* Input fields outside password field */
+.login-box input[type="email"],
+.login-box input[type="password"],
+.login-box input[type="text"] {
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  outline-offset: 2px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.login-box input[type="email"]:focus,
+.login-box input[type="password"]:focus,
+.login-box input[type="text"]:focus {
+  border-color: #4caf50;
+  outline: none;
+  box-shadow: 0 0 5px #4caf50aa;
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .login-box {
+    padding: 25px 20px;
+    max-width: 100%;
+    margin-bottom: 200px;
+  }
+  
+  .password-field input,
+  .login-box input[type="email"],
+  .login-box input[type="password"],
+  .login-box input[type="text"] {
+    font-size: 0.95rem;
+    padding: 10px 12px;
+  }
+}
+
