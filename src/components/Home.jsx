@@ -12,9 +12,9 @@ const BACKEND_URL = "https://bfc-inventory-backend.onrender.com";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
-  Chandigarh: { hour: 0, minute: 0 },
-  Delhi: { hour: 0, minute: 0 },
-  Gurugram: { hour: 0, minute: 0 },
+  Chandigarh: { hour: 16, minute: 0 },
+  Delhi: { hour: 16, minute: 0 },
+  Gurugram: { hour: 16, minute: 0 },
 };
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
