@@ -8,7 +8,7 @@ import { IoLogOutOutline } from "react-icons/io5";
 const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL;
 const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD;
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://bfc-inventory-backend.onrender.com";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
