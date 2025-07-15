@@ -12,9 +12,9 @@ const BACKEND_URL = "https://bfc-inventory-backend.onrender.com";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
-  Chandigarh: { hour: 16, minute: 0 },
-  Delhi: { hour: 16, minute: 0 },
-  Gurugram: { hour: 16, minute: 0 },
+  Chandigarh: { hour: 0, minute: 0 },
+  Delhi: { hour: 0, minute: 0 },
+  Gurugram: { hour: 0, minute: 0 },
 };
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
@@ -121,27 +121,17 @@ const Home = () => {
     }));
   };
 
-  const generateCSV = (dataMap, branchName = selectedBranch) => {
-    const headers = ["Category", "Item", "Quantity (Kg)"];
-    const rows = Object.entries(dataMap)
-      .filter(([, val]) => val.quantity)
-      .map(
-        ([item, { quantity, category }]) => `${category},${item},${quantity}`
-      );
-    return [`Branch: ${branchName || "N/A"}`, headers.join(","), ...rows].join(
-      "\n"
-    );
-  };
 
-  const sendCSVEmail = async (csvStr, successCallback) => {
-    const toastId = toast.loading("Sending email...");
+
+  const updateGoogleSheets = async (dataMap, successCallback) => {
+    const toastId = toast.loading("Updating Google Sheets...");
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/send-email`, {
+      const response = await fetch(`${BACKEND_URL}/update-sheets`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          csv: csvStr,
+          data: dataMap,
           branch: selectedBranch,
         }),
       });
@@ -149,7 +139,7 @@ const Home = () => {
       setLoading(false);
       toast.dismiss(toastId);
       if (response.ok) {
-        toast.success("Email sent successfully!");
+        toast.success("Google Sheets updated successfully!");
         if (successCallback) successCallback();
       } else {
         toast.error("Failed: " + (result.error || "Unknown error"));
@@ -168,8 +158,7 @@ const Home = () => {
     if (!selectedBranch) return toast.error("Please select a branch.");
     if (!hasData) return toast.error("No data to save.");
 
-    const csvString = generateCSV(quantities);
-    sendCSVEmail(csvString, () => {
+    updateGoogleSheets(quantities, () => {
       setQuantities({});
       setSelectedCategory("");
       setAlreadySubmitted(true);
@@ -311,11 +300,11 @@ const Home = () => {
         disabled={loading || !canSubmit}
       >
         {loading
-          ? "Sending..."
+          ? "Updating..."
           : alreadySubmitted
           ? "Already Submitted Today"
           : canSubmit
-          ? "Submit & Email Data"
+          ? "Submit to Google Sheets"
           : "Submit available after scheduled time"}
       </button>
     </div>
