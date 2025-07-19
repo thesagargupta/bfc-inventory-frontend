@@ -8,7 +8,7 @@ import { IoLogOutOutline } from "react-icons/io5";
 const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL;
 const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD;
 
-const BACKEND_URL = "https://bfc-inventory-backend.onrender.com";
+const BACKEND_URL = "http://localhost:5000";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
@@ -114,7 +114,8 @@ const Home = () => {
   };
 
   const handleQtyChange = (category, item, value) => {
-    if (!/^\d*$/.test(value)) return;
+    // Accept both integer and float values (e.g., 4, 4.5)
+    if (!/^\d*\.?\d*$/.test(value)) return;
     setQuantities((prev) => ({
       ...prev,
       [item]: { quantity: value, category },
