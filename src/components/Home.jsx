@@ -13,7 +13,7 @@ const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 const scheduledTimes = {
   Chandigarh: { hour: 1, minute: 0 },
-  Delhi: { hour: 0, minute: 0 },
+  Delhi: { hour: 18, minute: 0 },
   Gurugram: { hour: 0, minute: 0 },
 };
 
