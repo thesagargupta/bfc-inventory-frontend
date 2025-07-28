@@ -11,6 +11,13 @@ const LOGIN_PASSWORD = import.meta.env.VITE_LOGIN_PASSWORD;
 const BACKEND_URL = "https://bfc-inventory-backend.onrender.com";
 const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
+// Kitchen locations for each branch (latitude, longitude)
+const branchLocations = {
+  Chandigarh: { lat:  30.7102145, lng: 76.8070178, name: "Chandigarh Kitchen" },
+  Delhi: { lat: 28.556680, lng: 77.237307, name: "Delhi Kitchen" },
+  Gurugram: { lat: 28.4734084, lng: 77.0804124, name: "Gurugram Kitchen" },
+};
+
 const scheduledTimes = {
   Chandigarh: { hour: 0, minute: 0 },
   Delhi: { hour: 0, minute: 0 },
@@ -18,6 +25,29 @@ const scheduledTimes = {
 };
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
+
+// Calculate distance between two coordinates using Haversine formula
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+};
+
+// Check if user is within 5km radius of any branch
+const isWithinRadius = (userLat, userLng, branchName) => {
+  const branch = branchLocations[branchName];
+  if (!branch) return false;
+  const distance = calculateDistance(userLat, userLng, branch.lat, branch.lng);
+  return distance <= 5;
+};
 
 const Home = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -34,8 +64,73 @@ const Home = () => {
   const [canSubmit, setCanSubmit] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
+  // Geolocation states
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [accessibleBranches, setAccessibleBranches] = useState([]);
+
   useEffect(() => {
     localStorage.setItem("isAuthenticated", isAuthenticated ? "true" : "false");
+  }, [isAuthenticated]);
+
+  // Get user's current location and determine accessible branches
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const getCurrentLocation = () => {
+      setLocationLoading(true);
+      setLocationError("");
+
+      if (!navigator.geolocation) {
+        setLocationError("Geolocation is not supported by this browser.");
+        setLocationLoading(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          
+          // Check which branches are accessible
+          const accessible = branchOptions.filter((branch) =>
+            isWithinRadius(latitude, longitude, branch)
+          );
+          
+          setAccessibleBranches(accessible);
+          setLocationLoading(false);
+
+          if (accessible.length === 0) {
+            setLocationError("You are not within 5km of any branch kitchen.");
+          }
+        },
+        (error) => {
+          setLocationLoading(false);
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setLocationError("Location access denied. Please enable location services.");
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setLocationError("Location information is unavailable.");
+              break;
+            case error.TIMEOUT:
+              setLocationError("Location request timed out.");
+              break;
+            default:
+              setLocationError("An unknown error occurred while getting location.");
+              break;
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    };
+
+    getCurrentLocation();
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -96,6 +191,67 @@ const Home = () => {
     setSelectedBranch("");
     setSelectedCategory("");
     setQuantities({});
+    // Reset location states
+    setUserLocation(null);
+    setLocationError("");
+    setLocationLoading(false);
+    setAccessibleBranches([]);
+  };
+
+  const refreshLocation = () => {
+    setLocationError("");
+    setUserLocation(null);
+    setAccessibleBranches([]);
+    setSelectedBranch("");
+    
+    // Trigger location fetch again
+    setLocationLoading(true);
+    
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      setLocationLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        const accessible = branchOptions.filter((branch) =>
+          isWithinRadius(latitude, longitude, branch)
+        );
+        
+        setAccessibleBranches(accessible);
+        setLocationLoading(false);
+
+        if (accessible.length === 0) {
+          setLocationError("You are not within 5km of any branch kitchen.");
+        }
+      },
+      (error) => {
+        setLocationLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location access denied. Please enable location services.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out.");
+            break;
+          default:
+            setLocationError("An unknown error occurred while getting location.");
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000, // 1 minute for refresh
+      }
+    );
   };
 
   const handleBranchChange = (e) => setSelectedBranch(e.target.value);
@@ -158,6 +314,15 @@ const Home = () => {
     );
     if (!selectedBranch) return toast.error("Please select a branch.");
     if (!hasData) return toast.error("No data to save.");
+    
+    // Additional location validation before submission
+    if (!userLocation) {
+      return toast.error("Location verification required. Please enable location services.");
+    }
+    
+    if (!accessibleBranches.includes(selectedBranch)) {
+      return toast.error("You are not within 5km radius of the selected branch kitchen.");
+    }
 
     updateGoogleSheets(quantities, () => {
       setQuantities({});
@@ -248,15 +413,69 @@ const Home = () => {
       </div>
       <h1 className="home-title">Food Inventory Entry</h1>
 
+      {locationLoading && (
+        <div className="location-status" style={{ textAlign: "center", margin: "10px 0", color: "#007bff" }}>
+          📍 Getting your location...
+        </div>
+      )}
+      
+      {locationError && (
+        <div className="location-error" style={{ textAlign: "center", margin: "10px 0" }}>
+          <div style={{ color: "#dc3545", fontSize: "14px", marginBottom: "8px" }}>
+            ⚠️ {locationError}
+          </div>
+          <button
+            onClick={refreshLocation}
+            className="refresh-location-btn"
+            style={{
+              background: "#007bff",
+              color: "white",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+          >
+            🔄 Retry Location
+          </button>
+        </div>
+      )}
+
+      {userLocation && accessibleBranches.length > 0 && (
+        <div className="location-info" style={{ textAlign: "center", margin: "10px 0", color: "#28a745", fontSize: "14px" }}>
+          ✅ Location verified. You can access {accessibleBranches.length} branch(es).
+          <br />
+          <small style={{ color: "#666" }}>
+            {accessibleBranches.map((branch) => {
+              const distance = calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                branchLocations[branch].lat,
+                branchLocations[branch].lng
+              );
+              return `${branch}: ${distance.toFixed(1)}km`;
+            }).join(" | ")}
+          </small>
+        </div>
+      )}
+
       <select
         className="category-select"
         value={selectedBranch}
         onChange={handleBranchChange}
+        disabled={locationLoading || accessibleBranches.length === 0}
       >
-        <option value="">Select Branch</option>
-        {branchOptions.map((branch) => (
+        <option value="">
+          {locationLoading 
+            ? "Getting location..." 
+            : accessibleBranches.length === 0 
+            ? "No accessible branches" 
+            : "Select Branch"}
+        </option>
+        {accessibleBranches.map((branch) => (
           <option key={branch} value={branch}>
-            {branch}
+            {branch} ({branchLocations[branch].name})
           </option>
         ))}
       </select>
