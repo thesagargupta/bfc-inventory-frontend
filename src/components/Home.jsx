@@ -248,6 +248,7 @@ const itemUnits = {
 "Pizza Box 10 inch":"pc",
 "Tape":"pc",
 "Cuttlery Pouch":"pc",
+"Pizza table":"pc",
 "Sleeves":"pc",
 "ButterPaper":"pc",
 "Kot Roll":"pc",

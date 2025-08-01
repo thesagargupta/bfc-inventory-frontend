@@ -43,7 +43,7 @@ export const packaging_items = [
     "750 ML Flat Round Paper Container", "500 ML Flat Round Paper Container", "350 ML Flat Round Paper Container",
     "100 ML Flat Round Paper Container", "Wooden Spork", "Sanitizer", "Tissue", "Straw Packed",
     "Glass Bottle 350 ML", "Glass Salsa Jar 350 ML", "Glass Salsa Jar 100 ML", "Carry Bag",
-    "Burger Box", "Pizza Box 10\"", "Tape", "Sleeves", "ButterPaper", "Kot Roll","Cuttlery Pouch"
+    "Burger Box", "Pizza Box 10\"", "Tape", "Sleeves", "ButterPaper", "Kot Roll","Cuttlery Pouch","Pizza table"
 ];
 export const mezza_items = [
     "Whole Wheat Pita", "beetroot roti", "beetroot wrap roti", "Spinach Patty", "Chop Masala",
