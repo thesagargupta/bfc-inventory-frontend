@@ -8,7 +8,7 @@ export const grocery_items = [
     "Kabuli Chana", "Moong Whole (Sprouts)", "Chocolate Syrup", "Kevada Water", "Rose Water",
     "Mix Seeds (Sunflower, Pumpkin, Flex)", "Seasme Seeds", "Chia Seeds", "Hemp Seeds", "Jeerawan Powder",
     "Sugar", "Dhania Whole", "Mustard Seeds", "Peanuts Raw", "King Soya Oil", "Olive Oil", "Mustard Oil",
-    "Peanut Butter", "Coco Powder", "Poha", "Oats", "Rolled Oats", "Moosli", "Honey", "Milkmaid",
+    "Peanut Butter", "Coco Powder", "Poha", "Oats", "Rolled Oats", "Museli", "Honey", "Milkmaid",
     "Dark Compound", "Kismish", "Black Raisin", "Kaju", "Magaj", "Almonds", "Wallnuts", "Custard Powder",
     "Nachos", "Beetroot Chips", "Daliya", "HOT GARLIC SAUCE", "Haldiram Salted Peanuts", "Red Chilly Whole",
     "Coconut Milk Powder", "Coconut Powder", "Vanilla Frappe", "Vanilla Essence", "Parley Ji Buiscuit",
