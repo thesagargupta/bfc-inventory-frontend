@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import "./Home.css";
-import { categoryMap, allCategories } from "./data";
 import logo from "../assets/logo.png";
 import toast, { Toaster } from "react-hot-toast";
 import { IoLogOutOutline } from "react-icons/io5";
@@ -13,7 +12,7 @@ const branchOptions = ["Chandigarh", "Delhi", "Gurugram"];
 
 // Kitchen locations for each branch (latitude, longitude)
 const branchLocations = {
-  Chandigarh: { lat:  30.7102145, lng: 76.8070178, name: "Chandigarh Kitchen" },
+  Chandigarh: { lat: 30.7102145, lng: 76.8070178, name: "Chandigarh Kitchen" },
   Delhi: { lat: 28.556680, lng: 77.237307, name: "Delhi Kitchen" },
   Gurugram: { lat: 28.4734084, lng: 77.0804124, name: "Gurugram Kitchen" },
 };
@@ -26,247 +25,8 @@ const scheduledTimes = {
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
 
-// Units mapping for each inventory item
-const itemUnits = {
-"Milk":"ml",
-"Low Fat Butter":"gm",
-"CREAM":"gm",
-"Curd":"gm",
-"Greek Yogurt":"gm",
-"Paneer":"gm",
-"Tofu":"gm",
-"Custard Coolem":"ml",
-"Ice Cream Milk":"ml",
-"Ice cube":"gm",
-"Eggs":"pc",
-"FISH":"gm",
-"Chicken Breast":"gm",
-"Chicken Keema":"gm",
-"Chicken Wings":"gm",
-"Brown Bread Jumbo":"pc",
-"Pizza Base Wheat":"pc",
-"Burger Bun Wheat":"pc",
-"Museli":"gm",
-"ajinomoto":"gm",
-"dates":"gm",
-"Aata":"gm",
-"Maida":"gm",
-"Bajra Aata":"gm",
-"Besan":"gm",
-"Baking Powder":"gm",
-"Brown Rice":"gm",
-"White Rice (Golden Sella Double Chabbi)":"gm",
-"Coffee":"gm",
-"Pineapple Slice Tin":"gm",
-"Tomato Puree":"tin",
-"DryYeist":"gm",
-"Quinua/ Foxtail / Kudos":"gm",
-"Couc Cous":"gm",
-"Red Beans":"gm",
-"White Kidney Beans":"gm",
-"Kabuli Chana":"gm",
-"Moong Whole (Sprouts)":"gm",
-"Chocolate Syrup":"gm",
-"Kevada Water":"ml",
-"Rose Water":"ml",
-"Mix Seeds (Sunflower, Pumpkin, Flex)":"gm",
-"Seasme Seeds":"gm",
-"Chia Seeds":"gm",
-"Hemp Seeds":"gm",
-"Jeerawan Powder":"gm",
-"Sugar":"gm",
-"Dhania Whole":"gm",
-"Mustard Seeds":"gm",
-"Peanuts Raw":"gm",
-"King Soya Oil":"ml",
-"Olive Oil":"ml",
-"Mustard Oil":"ml",
-"Peanut Butter":"gm",
-"Coco Powder":"gm",
-"Poha":"gm",
-"Oats":"gm",
-"Rolled Oats":"gm",
-"Honey":"gm",
-"Milkmaid":"gm",
-"Dark Compound":"gm",
-"Kismish":"gm",
-"Black Raisin":"gm",
-"Kaju":"gm",
-"Magaj":"gm",
-"Almonds":"gm",
-"Wallnuts":"gm",
-"Custard Powder":"gm",
-"Nachos":"gm",
-"Beetroot Chips":"gm",
-"Daliya":"gm",
-"HOT GARLIC SAUCE":"gm",
-"Haldiram Salted Peanuts":"gm",
-"Red Chilly Whole":"gm",
-"Coconut Milk Powder":"gm",
-"Coconut Powder":"gm",
-"Vanilla Frappe":"gm",
-"Vanilla Essence":"gm",
-"Parley Ji Buiscuit":"pack",
-"Black Olives":"gm",
-"Alipino":"gm",
-"Oregano":"gm",
-"Chilly Flakes":"gm",
-"Black Pepper":"gm",
-"Rock Salt":"gm",
-"Salt":"gm",
-"Haldi":"gm",
-"Kitchen King":"gm",
-"Degi Mirch":"gm",
-"Rajma Masala":"gm",
-"Jeera":"gm",
-"Maggi Masala":"gm",
-"Ghee":"gm",
-"Badi Elaichi":"gm",
-"Elachi Powder":"gm",
-"Staff Rice":"gm",
-"Staff Tea":"gm",
-"Phynile":"ml",
-"Pasta":"gm",
-"Clove":"gm",
-"Tej Patta":"gm",
-"Sooji":"gm",
-"Smokey Barbeque Masala":"gm",
-"Chat Masala":"gm",
-"Chicken Tikka Masala (Shan)":"gm",
-"Kebab Masala (Shan)":"gm",
-"Kasturi Methi":"gm",
-"Biryani Masala":"gm",
-"Peri Peri Masala":"gm",
-"Italian Mix Seasoning":"gm",
-"Garlic Powder":"gm",
-"Thai Curry Masala":"gm",
-"Caramel Syrup":"gm",
-"Cheese Cake Casata Syrup":"gm",
-"Tomato Ketchup":"gm",
-"TObasco":"gm",
-"Vinegar":"gm",
-"Soya Sauce":"ml",
-"Teriyaki Sauce":"gm",
-"Thai Sweet Chilly Sauce":"gm",
-"Kasundi Mustard":"gm",
-"English Mustard":"gm",
-"Barbeque Sauce":"gm",
-"Thousand Sauce":"gm",
-"Chilly Garlic Sauce":"gm",
-"Chipotle Sauce":"gm",
-"Sweet Onion Sauce":"gm",
-"Red Chilly Sauce":"gm",
-"Mayonese":"gm",
-"Strawberry Crush":"gm",
-"Blueberry Crush":"gm",
-"Hazelnut Syrup":"ml",
-"Cajun Powder":"gm",
-"Pineapple Juice Tetra":"pack",
-"Mix Berries Frozen":"gm",
-"BlueBerries Frozen":"gm",
-"Strawberry Frozen":"gm",
-"Soya Tikka Frozen (Vegley)":"gm",
-"Cheddar Cheese Slice":"pc",
-"Mozerella Cheese":"gm",
-"Cheese Block":"gm",
-"Pancake Mix":"gm",
-"Origano Mix Sachet":"pack",
-"Chilly Flakes Sachet":"pack",
-"sabudana":"gm",
-"Bhuna Chana":"gm",
-"Silver Foil":"gm",
-"soya chunks":"gm",
-"water":"ltr",
-"Apple (Imp.)":"gm",
-"Banana":"pc",
-"Pomegranate":"gm",
-"Papaya":"gm",
-"Watermelon":"gm",
-"Dragon Fruit":"pc",
-"Kiwi (zespari)":"gm",
-"Grapes":"gm",
-"Red Globe":"gm",
-"Khajur (Kimia)":"gm",
-"Orange/Malta":"gm",
-"Sharda":"gm",
-"Guvava":"gm",
-"Pineapple":"gm",
-"Avacado":"pc",
-"Pears Indian":"gm",
-"Aamla":"gm",
-"Curry Patta":"gm",
-"arbi":"gm",
-"Onion":"gm",
-"Tomato":"gm",
-"Potato":"gm",
-"Zuccini":"gm",
-"Brokli":"gm",
-"Carrot":"gm",
-"Beans":"gm",
-"Cucumber":"gm",
-"Mushroom":"gm",
-"Capsicum":"gm",
-"Lemon":"gm",
-"Mint":"gm",
-"Red Cabbage":"gm",
-"Ice Berg":"gm",
-"Cherry Tomato":"gm",
-"Garlic (Peeled)":"gm",
-"Ginger":"gm",
-"Pumpkin":"gm",
-"Celery":"gm",
-"Basil":"gm",
-"Sweet Corn (Frozen)":"gm",
-"Peas (Frozen)":"gm",
-"Sweet Potato":"gm",
-"Beetroot":"gm",
-"Cauliflower":"gm",
-"Cabbage":"gm",
-"Parseley":"gm",
-"Baby Corn":"gm",
-"Green Chilly":"gm",
-"Baby Spinach":"gm",
-"Spinach":"gm",
-"Bellpepper (Red,Yellow)":"gm",
-"Coriander":"gm",
-"Lettuce":"gm",
-"Spring Onion":"gm",
-"Kale":"gm",
-"650 ML Flat Round Paper Container":"pc",
-"500 ML Flat Round Paper Container":"pc",
-"350 ML Flat Round Paper Container":"pc",
-"100 ML Flat Round Paper Container":"pc",
-"Wooden Spork":"pc",
-"Sanitizer":"pc",
-"Tissue":"pc",
-"Straw Packed":"pc",
-"Glass Bottle 350 ML":"pc",
-"Glass Salsa Jar 350 ML":"pc",
-"Glass Salsa Jar 100 ML":"pc",
-"Carry Bag":"pc",
-"Burger Box":"pc",
-"Pizza Box 10 inch":"pc",
-"Tape":"pc",
-"Cuttlery Pouch":"pc",
-"Pizza table":"pc",
-"Sleeves":"pc",
-"ButterPaper":"pc",
-"Kot Roll":"pc",
-"Whole Wheat Pita":"pc",
-"beetroot roti":"pc",
-"beetroot wrap roti":"pc",
-"Spinach Patty":"pc",
-"Chop Masala":"gm",
-"ITALIAN GRAVY":"gm",
-"pizza sauce":"gm",
-"indian gravy":"gm",
-"Spinach Paste":"gm",
-"salsa sauce":"gm",
-"Hawaain Dressing":"gm",
-"chilly lime dressing":"gm",
-"Mint Sauce":"gm",
-"peanut sauce":"gm",
-"Truffles":"gm",};
+
+
 
 // Calculate distance between two coordinates using Haversine formula
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -291,6 +51,8 @@ const isWithinRadius = (userLat, userLng, branchName) => {
   return distance <= 5;
 };
 
+
+
 const Home = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("isAuthenticated") === "true";
@@ -311,6 +73,41 @@ const Home = () => {
   const [locationError, setLocationError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [accessibleBranches, setAccessibleBranches] = useState([]);
+
+  // Dynamic inventory data from backend
+  const [categories, setCategories] = useState([]); // array of category names
+  const [categoryMap, setCategoryMap] = useState({}); // { category: [item, ...] }
+  const [itemUnits, setItemUnits] = useState({}); // { item: unit }
+
+  // Category loading state
+  const [catLoading, setCatLoading] = useState(false);
+  const [catError, setCatError] = useState("");
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setCatLoading(true);
+      setCatError("");
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/categories`);
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        setCategories(data.map(cat => cat.name));
+        // Build categoryMap and itemUnits
+        const catMap = {};
+        const unitsMap = {};
+        data.forEach(cat => {
+          catMap[cat.name] = cat.items.map(i => i.name);
+          cat.items.forEach(i => { unitsMap[i.name] = i.unit; });
+        });
+        setCategoryMap(catMap);
+        setItemUnits(unitsMap);
+      } catch (err) {
+        setCatError("Failed to load categories from backend");
+        toast.error("Failed to load categories from backend");
+      }
+      setCatLoading(false);
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("isAuthenticated", isAuthenticated ? "true" : "false");
@@ -551,11 +348,19 @@ const Home = () => {
   };
 
   const handleSubmit = () => {
-    const hasData = Object.values(quantities).some(
-      (val) => val && val.quantity
-    );
+    // Filter out items with empty or zero quantities
+    const filteredQuantities = Object.keys(quantities).reduce((acc, item) => {
+      const quantityValue = quantities[item]?.quantity;
+      if (quantityValue !== "" && quantityValue !== null && quantityValue !== undefined) {
+        acc[item] = quantities[item];
+      }
+      return acc;
+    }, {});
+
+    const hasData = Object.keys(filteredQuantities).length > 0;
+    
     if (!selectedBranch) return toast.error("Please select a branch.");
-    if (!hasData) return toast.error("No data to save.");
+    if (!hasData) return toast.error("No data to save. Please enter quantities for at least one item.");
     
     // Additional location validation before submission
     if (!userLocation) {
@@ -566,7 +371,8 @@ const Home = () => {
       return toast.error("You are not within 5km radius of the selected branch kitchen.");
     }
 
-    updateGoogleSheets(quantities, () => {
+    // Pass the filtered quantities to the update function
+    updateGoogleSheets(filteredQuantities, () => {
       setQuantities({});
       setSelectedCategory("");
       setAlreadySubmitted(true);
@@ -722,23 +528,29 @@ const Home = () => {
         ))}
       </select>
 
-      <select
-        className="category-select"
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-      >
-        <option value="">Select Category</option>
-        {allCategories.map((cat) => (
-          <option key={cat} value={cat}>
-            {cat}
-          </option>
-        ))}
-      </select>
+      {catLoading ? (
+        <div style={{ textAlign: "center", color: "#007bff", margin: "10px 0" }}>Loading categories...</div>
+      ) : catError ? (
+        <div style={{ textAlign: "center", color: "#dc3545", margin: "10px 0" }}>{catError}</div>
+      ) : (
+        <select
+          className="category-select"
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+      )}
 
       <div className="item-list-wrapper">
         <div className="item-list">
           {selectedCategory &&
-            categoryMap[selectedCategory].map((item) => (
+            (categoryMap[selectedCategory] || []).map((item) => (
               <div className="item-row" key={item}>
                 <label>{item}</label>
                 <input
