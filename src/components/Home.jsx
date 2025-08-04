@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./Home.css";
 import logo from "../assets/logo.png";
 import toast, { Toaster } from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
 import { IoLogOutOutline } from "react-icons/io5";
 
 const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL;
@@ -51,6 +52,15 @@ const isWithinRadius = (userLat, userLng, branchName) => {
   return distance <= 5;
 };
 
+// A dedicated fetch function for TanStack Query
+const fetchCategoriesAndItems = async () => {
+  const res = await fetch(`${BACKEND_URL}/api/categories`);
+  if (!res.ok) {
+    // Let react-query handle the error object
+    throw new Error("Failed to load categories from backend");
+  }
+  return res.json();
+};
 
 
 const Home = () => {
@@ -74,40 +84,30 @@ const Home = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [accessibleBranches, setAccessibleBranches] = useState([]);
 
-  // Dynamic inventory data from backend
-  const [categories, setCategories] = useState([]); // array of category names
-  const [categoryMap, setCategoryMap] = useState({}); // { category: [item, ...] }
-  const [itemUnits, setItemUnits] = useState({}); // { item: unit }
-
-  // Category loading state
-  const [catLoading, setCatLoading] = useState(false);
-  const [catError, setCatError] = useState("");
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setCatLoading(true);
-      setCatError("");
-      try {
-        const res = await fetch(`${BACKEND_URL}/api/categories`);
-        if (!res.ok) throw new Error("API error");
-        const data = await res.json();
-        setCategories(data.map(cat => cat.name));
-        // Build categoryMap and itemUnits
-        const catMap = {};
-        const unitsMap = {};
-        data.forEach(cat => {
-          catMap[cat.name] = cat.items.map(i => i.name);
-          cat.items.forEach(i => { unitsMap[i.name] = i.unit; });
-        });
-        setCategoryMap(catMap);
-        setItemUnits(unitsMap);
-      } catch (err) {
-        setCatError("Failed to load categories from backend");
-        toast.error("Failed to load categories from backend");
-      }
-      setCatLoading(false);
-    };
-    fetchCategories();
-  }, []);
+  const {
+    data: inventoryData,
+    isLoading: catLoading,
+    error: catError,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: fetchCategoriesAndItems,
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    select: (data) => {
+      // This transformation runs only when `data` changes
+      const catMap = {};
+      const unitsMap = {};
+      data.forEach((cat) => {
+        catMap[cat.name] = cat.items.map((i) => i.name);
+        cat.items.forEach((i) => { unitsMap[i.name] = i.unit; });
+      });
+      return {
+        categories: data.map((cat) => cat.name),
+        categoryMap: catMap,
+        itemUnits: unitsMap,
+      };
+    },
+  });
+  const { categories = [], categoryMap = {}, itemUnits = {} } = inventoryData || {};
 
   useEffect(() => {
     localStorage.setItem("isAuthenticated", isAuthenticated ? "true" : "false");
@@ -531,7 +531,7 @@ const Home = () => {
       {catLoading ? (
         <div style={{ textAlign: "center", color: "#007bff", margin: "10px 0" }}>Loading categories...</div>
       ) : catError ? (
-        <div style={{ textAlign: "center", color: "#dc3545", margin: "10px 0" }}>{catError}</div>
+        <div style={{ textAlign: "center", color: "#dc3545", margin: "10px 0" }}>{catError.message}</div>
       ) : (
         <select
           className="category-select"
