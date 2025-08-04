@@ -9,7 +9,6 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {/* 2. Wrap your application with the QueryClientProvider and pass the client */}
     <QueryClientProvider client={queryClient}>
       <Home />
     </QueryClientProvider>
